@@ -19,11 +19,10 @@
 
 
 int main(void) {
-    //io_init();
-    //pwm_init();
-    //adc_init();
-    //init_heartbeat();
-
+//    io_init();
+//    pwm_init();
+//    adc_init();
+//    heartbeat_init();
     while(1){
         heartbeat();
     }
