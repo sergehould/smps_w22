@@ -10,12 +10,17 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * Serge Hould      29 Sept. 2021	v1.0
  * Serge Hould      13 Dec 2021     v1.1 Adapt for MICROSTICK II
+ * Serge Hould      11 April 2022   v1.2 Modify heartbeat macros
+ * SH               28 June 2023    v1.3 Add  map function 
+ * SH               13 Dec. 2023    v1.4 Exception handler
  * 
  * TO DO: fine tune delay for MICROSTICK II 
  * 		
  *******************************************************************************/
 #include <xc.h>
 #include "util.h"
+#include "initBoard.h"
+#include <stdio.h>
 
 /*********************** Heartbeat section ************************************
  *
@@ -27,25 +32,32 @@
  * Author        	Date            Version     Comments on this revision
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * Serge Hould      15 Sept. 2021   1.0         First version 
+ * Serge Hould      11 April 2022   1.1         Sets different values depending
+ *                                              on the board.
  * 
  * 		
  *******************************************************************************/
 
-#define     SKIP        20000    // Sets the heartbeat frequency
 
-//#define     DUTY        50     // 0.1 % duty cycle
-#define     DUTY      500     // 1 % duty cycle
-//#define     DUTY      5000     // 10 % duty cycle
-//#define     DUTY       50000   // 100% duty cycle
 
 #if defined  MX3
+	#define     SKIP        20000    // Sets the heartbeat frequency
+
+	//#define     DUTY        20     // 0.1 % duty cycle
+	#define     DUTY      200     // 1 % duty cycle
+	//#define     DUTY      2000     // 10 % duty cycle
+	//#define     DUTY       20000   // 100% duty cycle
     //#define     HEARTBEAT    LATDbits.LATD12  //Green LED
     #define     HEARTBEAT    LATDbits.LATD3  // Blue LED
     //#define     HEARTBEAT    LATDbits.LATD2  // Red LED
 #elif   defined EXPLORER_16_32
+	#define     SKIP        20000    // Sets the heartbeat frequency
+	#define     DUTY      	10000     // 50 % duty cycle
     #define     HEARTBEAT    LATAbits.LATA7  // D10 LED
 
 #elif defined MICROSTICK_II
+	#define     SKIP        20000    // Sets the heartbeat frequency
+	#define     DUTY      	10000     // 50 % duty cycle
     #define     HEARTBEAT      LATAbits.LATA0
 #endif
 
@@ -236,7 +248,7 @@ void delay_10us( unsigned int  t10usDelay )
 void delay_ms( unsigned int  tmsDelay )
 {
     int j;
-    tmsDelay *=100;
+    tmsDelay *=60;
     while ( 0 < tmsDelay )
     {
         tmsDelay--;
@@ -345,3 +357,51 @@ void delay_ms( unsigned int  tmsDelay )
 
 #endif
 /********************* End of Blocking Delay section  section******************/
+
+/* Map function */
+/* Long version */
+long map(long x, long in_min, long in_max, long out_min, long out_max) {
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+/* Float version */
+float mapf(float x, float in_min, float in_max, float out_min, float out_max) {
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+/******************** Exception Handler section*********************************/
+
+#if defined  MX3
+/* Exception handler that prints a message to the active console */
+/* It also blinks all LEDS every 100mS                           */
+void _general_exception_handler( unsigned c, unsigned s){  
+    ios_init();
+    while (1){
+        printf("\n\rException called\n                ");
+        /* Blinks all LEDs*/
+        LATA = LATA & 0xffffff00;
+        delay_ms(100);
+        LATA = LATA | 0x000000ff;
+        printf("\n\r                \n                ");
+        delay_ms(100);
+    }
+} // exception handler
+#elif   defined EXPLORER_16_32
+/* Exception handler that prints a message to the active console */
+/* It also blinks all LEDS every 100mS                           */
+void _general_exception_handler( unsigned c, unsigned s){  
+    ios_init();
+    while (1){
+        printf("\n\rException called\n                ");
+        /* Blinks all LEDs*/
+        LATA = LATA & 0xffffff00;
+        delay_ms(100);
+        LATA = LATA | 0x000000ff;
+        printf("\n\r                \n                ");
+        delay_ms(100);
+    }
+} // exception handler
+#elif defined MICROSTICK_II
+    // todo
+#endif
+
+/******************** End of Exception Handler section*********************************/
